@@ -8,7 +8,7 @@ const app = express();
 app.use(bodyParser.json());
 
 // === CONFIGURATION (CẤU HÌNH) ===
-const ZALO_ACCESS_TOKEN = '224522826880768378:RZCXDMDnyslPycjcweVIRwtePKDcctuMZawfQFxgLeZHLYXZXTaRcZzTlIuryRuA'; 
+const ZALO_ACCESS_TOKEN = '224522826880768378:KNwjuyEbFXvjroVTFJBivjWCxSkYgiBrhWcEcklJCpQLhtjystHGHxSTBDbfztho'; 
 const ZALO_API_URL = 'https://openapi.zalo.me/v2.0/oa/message';
 
 // Cấu hình Google Sheets
