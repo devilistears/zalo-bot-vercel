@@ -8,11 +8,14 @@ const app = express();
 app.use(bodyParser.json());
 
 // === CONFIGURATION (CẤU HÌNH) ===
-const ZALO_ACCESS_TOKEN = 'YOUR_ZALO_ACCESS_TOKEN'; 
+const ZALO_ACCESS_TOKEN = '224522826880768378:RZCXDMDnyslPycjcweVIRwtePKDcctuMZawfQFxgLeZHLYXZXTaRcZzTlIuryRuA'; 
 const ZALO_API_URL = 'https://openapi.zalo.me/v2.0/oa/message';
 
 // Cấu hình Google Sheets
-const GOOGLE_SHEET_ID = 'YOUR_GOOGLE_SHEET_ID'; 
+const GOOGLE_SHEET_ID = '17oKkd8uZ4HR8RAMu06xUz-BFrZI2e3DF8pR9XUa222M'; 
+// Đặt tên sheet cần tìm kiếm vào đây
+const SEARCH_SHEET_NAME = 'VaiDinhHinh_ZaloBot'; // Thay 'Sheet1' bằng tên sheet của bạn
+
 const sheets = google.sheets({
   version: 'v4',
   auth: new google.auth.GoogleAuth({
@@ -52,12 +55,12 @@ const handleSearchRequest = async (userId, searchTerm) => {
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: GOOGLE_SHEET_ID,
-      range: 'Sheet1!B:P',
+      range: `${SEARCH_SHEET_NAME}!B:P`, // Dùng biến hằng số để chỉ định sheet
     });
 
     const rows = response.data.values;
     if (!rows || rows.length === 0) {
-      await sendTextZaloMessage(userId, 'Không tìm thấy dữ liệu trong Google Sheets.');
+      await sendTextZaloMessage(userId, `Không tìm thấy dữ liệu trong sheet "${SEARCH_SHEET_NAME}".`);
       return;
     }
     
