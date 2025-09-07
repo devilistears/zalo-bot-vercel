@@ -2,13 +2,23 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
+const { google } = require('googleapis');
 
 const app = express();
 app.use(bodyParser.json());
 
 // === CONFIGURATION (CẤU HÌNH) ===
-const ZALO_ACCESS_TOKEN = '224522826880768378:RZCXDMDnyslPycjcweVIRwtePKDcctuMZawfQFxgLeZHLYXZXTaRcZzTlIuryRuA'; // Thay bằng Access Token của bạn
+const ZALO_ACCESS_TOKEN = 'YOUR_ZALO_ACCESS_TOKEN'; 
 const ZALO_API_URL = 'https://openapi.zalo.me/v2.0/oa/message';
+
+// Cấu hình Google Sheets
+const GOOGLE_SHEET_ID = 'YOUR_GOOGLE_SHEET_ID'; 
+const sheets = google.sheets({
+  version: 'v4',
+  auth: new google.auth.GoogleAuth({
+    scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+  }),
+});
 
 // === MAIN LOGIC (LOGIC CHÍNH) ===
 app.post('/', async (req, res) => {
@@ -19,10 +29,18 @@ app.post('/', async (req, res) => {
   const messageText = (data.message && data.message.text) ? data.message.text : null;
 
   if (eventName === 'user_send_text' && messageText) {
+    // Nếu người dùng gõ "hello", bot sẽ chào
     if (messageText.toLowerCase() === 'hello') {
-      await sendZaloMessage(userId, 'Xin chào! Bạn cần giúp gì?');
-    } else {
-      await sendZaloMessage(userId, 'Tôi chỉ hiểu từ khóa "hello" thôi. 😊');
+      await sendTextZaloMessage(userId, 'Xin chào! Bạn cần giúp gì?');
+    }
+    // Xử lý yêu cầu hiển thị ảnh khi người dùng nhấn nút
+    else if (messageText.toLowerCase().startsWith('show_image:')) {
+      const imageUrl = messageText.substring(11).trim();
+      await sendImageZaloMessage(userId, imageUrl);
+    }
+    // Nếu không phải "hello" hay "show_image", bot sẽ tự động tìm kiếm
+    else {
+      await handleSearchRequest(userId, messageText);
     }
   }
   
@@ -30,7 +48,70 @@ app.post('/', async (req, res) => {
 });
 
 // === HELPER FUNCTION (HÀM HỖ TRỢ) ===
-const sendZaloMessage = async (userId, message) => {
+const handleSearchRequest = async (userId, searchTerm) => {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: GOOGLE_SHEET_ID,
+      range: 'Sheet1!B:P',
+    });
+
+    const rows = response.data.values;
+    if (!rows || rows.length === 0) {
+      await sendTextZaloMessage(userId, 'Không tìm thấy dữ liệu trong Google Sheets.');
+      return;
+    }
+    
+    for (const row of rows) {
+      if (row[0] && row[0].toLowerCase().includes(searchTerm.toLowerCase())) {
+        const resultColumns = row.slice(2, 14).filter(Boolean); 
+        let messageText = resultColumns.join('\n');
+
+        const imageUrl = row[14] ? row[14].trim() : '';
+
+        if (imageUrl) {
+          const buttonText = "Xem thêm về vải mẫu";
+          const payload = {
+            recipient: {
+              user_id: userId,
+            },
+            message: {
+              attachment: {
+                type: 'template',
+                payload: {
+                  template_type: 'template',
+                  elements: [{
+                    title: messageText,
+                    subtitle: 'Nhấn nút để xem ảnh',
+                    buttons: [{
+                      title: buttonText,
+                      type: 'query_show',
+                      payload: {
+                        template_type: 'template',
+                        message: `show_image: ${imageUrl}`,
+                        action_title: 'Xem ảnh',
+                      },
+                    }],
+                  }],
+                },
+              },
+            },
+          };
+          await sendZaloMessage(userId, payload);
+        } else {
+          await sendTextZaloMessage(userId, messageText);
+        }
+        return;
+      }
+    }
+    
+    await sendTextZaloMessage(userId, `Không tìm thấy kết quả nào cho "${searchTerm}".`);
+  } catch (error) {
+    console.error('Error searching Google Sheets:', error.message);
+    await sendTextZaloMessage(userId, 'Đã có lỗi xảy ra khi tìm kiếm.');
+  }
+};
+
+const sendTextZaloMessage = async (userId, message) => {
   const payload = {
     recipient: {
       user_id: userId,
@@ -39,7 +120,31 @@ const sendZaloMessage = async (userId, message) => {
       text: message,
     },
   };
+  await sendZaloMessage(userId, payload);
+};
 
+const sendImageZaloMessage = async (userId, imageUrl) => {
+  const payload = {
+    recipient: {
+      user_id: userId,
+    },
+    message: {
+      attachment: {
+        type: 'template',
+        payload: {
+          template_type: 'media',
+          elements: [{
+            media_type: 'image',
+            url: imageUrl,
+          }],
+        },
+      },
+    },
+  };
+  await sendZaloMessage(userId, payload);
+};
+
+const sendZaloMessage = async (userId, payload) => {
   const headers = {
     'access_token': ZALO_ACCESS_TOKEN,
     'Content-Type': 'application/json',
@@ -52,5 +157,4 @@ const sendZaloMessage = async (userId, message) => {
   }
 };
 
-// Dòng này rất quan trọng để Vercel chạy đúng
 module.exports = app;
