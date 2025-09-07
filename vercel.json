@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/zalo_verifierJEEq5ewGF1bQkOWjePGy3dEPjIUVxs9zE3On.html",
+      "destination": "/zalo_verifierJEEq5ewGF1bQkOWjePGy3dEPjIUVxs9zE3On.html"
+    }
+  ]
+}
