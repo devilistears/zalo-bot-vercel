@@ -7,7 +7,7 @@ const app = express();
 app.use(bodyParser.json());
 
 // === CONFIGURATION (CẤU HÌNH) ===
-const ZALO_ACCESS_TOKEN = 'YOUR_ZALO_ACCESS_TOKEN'; // Thay bằng Access Token của bạn
+const ZALO_ACCESS_TOKEN = '224522826880768378:RZCXDMDnyslPycjcweVIRwtePKDcctuMZawfQFxgLeZHLYXZXTaRcZzTlIuryRuA'; // Thay bằng Access Token của bạn
 const ZALO_API_URL = 'https://openapi.zalo.me/v2.0/oa/message';
 
 // === MAIN LOGIC (LOGIC CHÍNH) ===
