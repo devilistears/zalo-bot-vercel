@@ -7,14 +7,13 @@ const app = express();
 app.use(bodyParser.json());
 
 // === CONFIGURATION (CẤU HÌNH) ===
-const ZALO_ACCESS_TOKEN = '224522826880768378:RZCXDMDnyslPycjcweVIRwtePKDcctuMZawfQFxgLeZHLYXZXTaRcZzTlIuryRuA'; // Thay bằng Access Token của bạn
+const ZALO_ACCESS_TOKEN = 'YOUR_ZALO_ACCESS_TOKEN'; // Thay bằng Access Token của bạn
 const ZALO_API_URL = 'https://openapi.zalo.me/v2.0/oa/message';
 
 // === MAIN LOGIC (LOGIC CHÍNH) ===
 app.post('/', async (req, res) => {
   const data = req.body;
 
-  // Zalo sẽ gửi một đối tượng JSON
   const userId = data.sender.id;
   const eventName = data.event_name;
   const messageText = (data.message && data.message.text) ? data.message.text : null;
@@ -26,7 +25,7 @@ app.post('/', async (req, res) => {
       await sendZaloMessage(userId, 'Tôi chỉ hiểu từ khóa "hello" thôi. 😊');
     }
   }
-
+  
   res.status(200).send('ok');
 });
 
@@ -53,5 +52,5 @@ const sendZaloMessage = async (userId, message) => {
   }
 };
 
-// Vercel sẽ tự động khởi động server, bạn không cần chạy app.listen()
-// module.exports = app;
+// Dòng này rất quan trọng để Vercel chạy đúng
+module.exports = app;
